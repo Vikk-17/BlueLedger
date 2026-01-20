@@ -18,11 +18,13 @@
     "@types/express": "^5.0.6",
     "@types/mongoose": "^5.11.96",
     "@types/multer": "^2.0.0",
+    "@types/multer-s3": "^3.0.3",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "minio": "^8.0.6",
     "mongoose": "^9.1.4",
     "multer": "^2.0.2",
+    "multer-s3": "^3.0.1",
     "pg": "^8.17.1"
   },
   "devDependencies": {
