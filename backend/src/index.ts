@@ -5,6 +5,7 @@ import * as Minio from 'minio'
 import { User } from "./db";
 import multer from "multer";
 import multerS3 from "multer-s3";
+import { S3Client } from "@aws-sdk/client-s3";
 import path from "path";
 import { fileURLToPath } from "url";
 import * as config from "./config.json";
@@ -19,19 +20,12 @@ app.use(express.json())
 
 // -- Multer Client with aws s3
 // set up multer storage
-import { S3Client } from "@aws-sdk/client-s3";
-// const { S3Client, PutObjectCommand, CreateBucketCommand } = awsSdk;
-
 let accessKeyId = process.env.ACCESS_KEY_ID;
 let secretAccessKey = process.env.SECRET_ACCESS_KEY;
-// if (accessKeyId == undefined && secretAccessKey == undefined) {
-//     accessKeyId = "";
-//     secretAccessKey = "";
-// }
-// Check if EITHER is missing using || (OR)
 if (!accessKeyId || !secretAccessKey) {
     throw new Error("AWS Credentials missing. Please check your .env file.");
 }
+
 
 const s3Client = new S3Client({
     region: 'us-east-1',
@@ -41,45 +35,27 @@ const s3Client = new S3Client({
     }
 });
 
+
 const upload = multer({ 
     storage: multerS3({
         s3: s3Client,
         bucket: "test-ledger-3030",
+        // acl: 'public-read', // <- change this based on the access level
+        contentType: multerS3.AUTO_CONTENT_TYPE,
         metadata: function (req, file, cb) {
             cb(null, {fieldName: file.fieldname});
         },
-        key: function(req, res, cb) {
-            cb(null, Date.now().toString())
+        key: function(req, file, cb) {
+            cb(null, `${Date.now()}-${file.originalname}`) // <- key to store
         }
     })
 });
-
-// const storage = multer.diskStorage({
-//     destination: function (req, file, cb) {
-//         cb(null, '/uploads')
-//     },
-//     filename: function (req, file, cb) {
-//         cb(null, Date.now() + '-' + file.originalname);
-//     }
-// });
-
-
-// -- Minio Client
-// Console: https://play.min.io:9443/
-// const bucket = "blue-ledger-objects";
-// const minioClient = new Minio.Client({
-//     endPoint: 'play.min.io',
-//     port: 9000,
-//     useSSL: true,
-//     accessKey: 'Q3AM3UQ867SPQQA43P2F',
-//     secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG',
-// })
 
 
 //  -- Database Configuration
 let DB_URL: string | undefined = process.env.DATABASE_URL;
 // -- Override if there is no .env file | no url in .env
-if (DB_URL == undefined) {
+if (DB_URL == undefined || !DB_URL) {
     DB_URL = config.DB_URL;
 }
 
@@ -130,23 +106,10 @@ app.get("/", (req, res) => {
 app.post("/upload/images", upload.single('uploadedFile'), async (req, res) => {
     console.log(req.file); // Contains file info
     if (req.file != undefined) {
-        // finename
+        // filename
         const sourceFileName = req.file.originalname;
         // file path
         const sourceFilePath = req.file.path;
-        // const exists = await minioClient.bucketExists(bucket)
-        // if (exists) {
-        //     console.log("Bucket " + bucket + " exists");
-        // } else {
-        //     await minioClient.makeBucket(bucket, "us-east-1");
-        //     console.log("Bucket " + bucket + " created in us-east-1.");
-        // }
-        //
-        // let metaData = {
-        //     "Content-Type": "image/jpg"
-        // }
-        // await minioClient.fPutObject(bucket, req.file.originalname, sourceFilePath, metaData)
-        // console.log("File " + sourceFilePath + " upload as object " + req.file.originalname + " in bucket " + bucket);
         res.send(`File uploaded successfully: ${req.file.originalname}`);
     }
     else {
