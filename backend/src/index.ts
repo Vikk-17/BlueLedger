@@ -11,7 +11,7 @@ import { User, Post } from "./model";
 
 // -- Server Config
 const app = express();
-dotenv.config({ path: './.env' })
+dotenv.config({ path: './.env', quiet: true })
 
 // -- Middleware --
 app.use(express.json())
@@ -82,6 +82,7 @@ app.post("/test", async (req, res) => {
         email,
         password,
     });
+
     try {
         const response = await user.save();
         res.json({
@@ -97,6 +98,9 @@ app.get("/", (req, res) => {
     res.send(`
         <h1>File Upload Demo</h1>
         <form action="/upload/images" method="post" enctype="multipart/form-data">
+            <input type="text" name="userId" placeholder='mock userId' />
+            <input type="text" name="title" placeholder="title" />
+            <input type="text" name="description" placeholder="description" />
             <input type="file" name="uploadedFile" />
             <button type="submit">Upload</button>
         </form>
@@ -105,16 +109,53 @@ app.get("/", (req, res) => {
 
 
 app.post("/upload/images", upload.single('uploadedFile'), async (req, res) => {
-    console.log(req.file); // Contains file info
-    if (req.file != undefined) {
-        // filename
-        const sourceFileName = req.file.originalname;
-        // file path
-        const sourceFilePath = req.file.path;
-        res.send(`File uploaded successfully: ${req.file.originalname}`);
-    }
-    else {
-        res.send("Error while uploading images")
+    try {
+
+        console.log(req.file, req.body); // Contains file info
+        if(!req.file){
+            return res.status(400).json({
+                error: "No file uploaded",
+            })
+        }
+
+        // if (req.file != undefined) {
+        //     // filename
+        //     const sourceFileName = req.file.originalname;
+        //     // file path
+        //     const sourceFilePath = req.file.path;
+        //     res.send(`File uploaded successfully: ${req.file.originalname}`);
+        // }
+        // else {
+        //     res.send("Error while uploading images")
+        // }
+
+        // const user = new User({
+        //     username: req.body.username,
+        //     email: req.body.email,
+        //     password: req.body.password,
+        // });
+
+        const post = new Post({
+            title: req.body.title,
+            description: req.body.description,
+            imageKey: (req.file as any).key,
+            originalName: req.file.originalname,
+            mimetype: req.file.mimetype,
+            user: req.body.userId,
+        });
+
+        await post.save();
+
+        res.status(201).json({ 
+            message: "Upload successful", 
+            post: post
+        });
+
+    } catch(error) {
+        console.error(error);
+        res.status(500).json({
+            error: "Serving error during upload",
+        })
     }
 });
 

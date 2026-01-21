@@ -79,6 +79,7 @@ const PostSchema = new Schema<IPost>({
     },
 
     // Link to the user collection
+    // Add on feature while authentication
     user: {
         type: Schema.Types.ObjectId,
         ref: "User",
