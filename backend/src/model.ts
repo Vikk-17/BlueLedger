@@ -10,15 +10,27 @@ export interface IUser {
     updatedAt?: Date;
 }
 
+export interface Image {
+    imageKey: string;
+    originalName: string;
+    mimetype: string;
+    size: number;
+}
+
+export interface Location {
+    type: "Point" | "LineString" | "Polygon";
+    coordinates: number[] | number[][] | number[][][]
+}
+
 export interface IPost {
     title: string;
     description: string;
 
     // S3 Data
-    imageKey: string;
-    originalName: string;
-    mimetype: string;
-    size: number;
+    images: Array<Image>;
+
+    // GeoJson format data 
+    locations: Array<Location>;
 
     // user reference
     user: Types.ObjectId; // Id for the user document
@@ -49,6 +61,7 @@ const UserSchema = new Schema<IUser>({
         required: true,
         minlength: 6
     },
+
     // role: {
     //     type: String,
     //     enum: ["user", "admin"],
@@ -65,17 +78,27 @@ const PostSchema = new Schema<IPost>({
         type: String,
         required: true,
     },
-    imageKey: {
-        type: String,
-        required: true,
-    },
-    originalName: {
-        type: String,
-        required: true,
-    },
-    mimetype: {
-        type: String,
-        required: true,
+    images: [{
+        imageKey: {
+            type: String,
+            required: true,
+        },
+        originalName: String,
+        mimetype: String,
+        size: Number,
+    }],
+
+    location: {
+        _id: false,
+        type: {
+            type: String,
+            enum: ["Point", "LineString", "Polygon"],
+            required: true
+        },
+        coordinates: {
+            type: Schema.Types.Mixed,
+            required: true
+        }
     },
 
     // Link to the user collection
@@ -88,6 +111,8 @@ const PostSchema = new Schema<IPost>({
     }
 });
 
+// Index the 'locations' array for geospatial queries
+PostSchema.index({ "locations": "2dsphere" });
 const User = model<IUser>("User", UserSchema);
 const Post = model<IPost>("Post", PostSchema);
 
