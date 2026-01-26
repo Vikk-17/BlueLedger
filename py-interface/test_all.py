@@ -16,8 +16,8 @@ from sentinelhub import (
 )
 
 
-CLIENT_ID = "216572c1-2472-41d5-ad4e-77b36a1a4ca7"
-CLIENT_SECRET = "hDozpdGWtOVGkO7Kue5v3zRgfU1Alcoj"
+CLIENT_ID = ""
+CLIENT_SECRET = ""
 
 GEOJSON_FILE = "aoi2.geojson"
 
