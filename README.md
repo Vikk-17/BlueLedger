@@ -4,7 +4,7 @@
 ![Architecture](./assets/images/architecture.svg)
 
 ### Second Draft
-![Architecture_second_draft](./assets/images/architecture_update.png)
+![Architecture_second_draft](./assets/images/architecture_update.svg)
 
 ---
 

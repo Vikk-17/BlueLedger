@@ -35,7 +35,7 @@ const s3Client = new S3Client({
 });
 
 
-const upload = multer({ 
+const upload = multer({
     storage: multerS3({
         s3: s3Client,
         bucket: "test-ledger-3030",
@@ -94,25 +94,56 @@ app.post("/test", async (req, res) => {
     }
 });
 
-app.get("/", (req, res) => {
+
+app.get("/single-upload", (req, res) => {
     res.send(`
         <h1>File Upload Demo</h1>
-        <form action="/upload/images" method="post" enctype="multipart/form-data">
+        <form action="/upload/single/image" method="post" enctype="multipart/form-data">
             <input type="text" name="userId" placeholder='mock userId' />
             <input type="text" name="title" placeholder="title" />
             <input type="text" name="description" placeholder="description" />
+
+            <textarea name="geojson" placeholder="paste geojson data" rows="10" cols='50'></textarea>
+            <!-- upload multiple images -->
             <input type="file" name="uploadedFile" />
             <button type="submit">Upload</button>
         </form>
     `);
 });
 
+app.get("/multiple-upload", (req, res) => {
+    res.send(`
+        <h1>File Upload Demo</h1>
+        <form action="/upload/multiple/image" method="post" enctype="multipart/form-data">
+            <input type="text" name="userId" placeholder='mock userId' />
+            <input type="text" name="title" placeholder="title" />
+            <input type="text" name="description" placeholder="description" />
 
-app.post("/upload/images", upload.single('uploadedFile'), async (req, res) => {
+            <textarea name="geojson" placeholder="paste geojson data" rows="10" cols='50'></textarea>
+            <!-- upload multiple images -->
+            <input type="file" name="uploadedFile" multiple/>
+            <button type="submit">Upload</button>
+        </form>
+    `);
+});
+
+
+// test
+// app.post('/upload/single/image', upload.single("uploadedFile"), async(req, res) => {
+//     console.log(req.file);
+// });
+
+// app.post('/upload/multiple/image', upload.array("uploadedFile", 2), async(req, res) => {
+//     // remember there is req.files to get access of array of uploaded files
+//     console.log(req.files);
+// });
+
+app.post("/upload/multiple/image", upload.array('uploadedFile', 2), async (req, res) => {
     try {
 
-        console.log(req.file, req.body); // Contains file info
-        if(!req.file){
+        console.log(req.files, req.body);
+
+        if(!req.files){
             return res.status(400).json({
                 error: "No file uploaded",
             })
@@ -138,9 +169,44 @@ app.post("/upload/images", upload.single('uploadedFile'), async (req, res) => {
         const post = new Post({
             title: req.body.title,
             description: req.body.description,
-            imageKey: (req.file as any).key,
-            originalName: req.file.originalname,
-            mimetype: req.file.mimetype,
+            images: (req.files as Express.Multer.File[]).map((file: any) => {
+                return {
+                    imageKey: file.key,
+                    originalName: file.originalname,
+                    mimetype: file.mimetype,
+                    size: file.size,
+                }
+            }),
+            locations: (() => {
+                let geojson = req.body.geojson;
+
+                if (typeof geojson === "string") {
+                    geojson = JSON.parse(geojson);
+                }
+
+                return geojson.features.map((feature: any) => {
+                    const { type, coordinates } = feature.geometry;
+
+                    if (type === "Point") {
+                        const lng = Number(coordinates[0]);
+                        const lat = Number(coordinates[1]);
+
+                        if (Number.isNaN(lng) || Number.isNaN(lat)) {
+                            throw new Error("Invalid Point coordinates");
+                        }
+
+                        return {
+                            type,
+                            coordinates: [lng, lat],
+                        };
+                    }
+
+                    return {
+                        type,
+                        coordinates,
+                    };
+                });
+            })(),
             user: req.body.userId,
         });
 
@@ -159,6 +225,14 @@ app.post("/upload/images", upload.single('uploadedFile'), async (req, res) => {
     }
 });
 
+// test => expect geojson data 
+app.post("/location", (req, res) => {
+    const location = req.body;
+    res.status(200).json({
+        message: "success",
+        data: location
+    })
+});
 
 app.listen(config.PORT, () => {
     console.log(`Server is listening on http://localhost:${config.PORT}`);
