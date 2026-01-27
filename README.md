@@ -1,10 +1,10 @@
 # Architecute
 
 ### First Draft
-![Architecute](./assets/images/architecture.svg)
+![Architecture](./assets/images/architecture.svg)
 
-### Secode Draft
-![Architecute](./assets/images/architecture_update.png)
+### Second Draft
+![Architecture_second_draft](./assets/images/architecture_update.png)
 
 ---
 
