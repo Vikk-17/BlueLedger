@@ -4,11 +4,12 @@ import dotenv from 'dotenv'
 import multer from "multer";
 import multerS3 from "multer-s3";
 import { S3Client } from "@aws-sdk/client-s3";
-import path from "path";
+// import path from "path";
 // import { fileURLToPath } from "url";
 import * as config from "./config.json";
 import { User, Post } from "./model";
-import * from "./"
+
+// import * from "./"
 // -- Server Config
 const app = express();
 dotenv.config({ path: './.env', quiet: true })
@@ -137,19 +138,19 @@ app.post("/upload/multiple/image", upload.array('uploadedFile', 2), async (req, 
                 return geojson.features.map((feature: any) => {
                     const { type, coordinates } = feature.geometry;
 
-                    if (type === "Point") {
-                        const lng = Number(coordinates[0]);
-                        const lat = Number(coordinates[1]);
-
-                        if (Number.isNaN(lng) || Number.isNaN(lat)) {
-                            throw new Error("Invalid Point coordinates");
-                        }
-
-                        return {
-                            type,
-                            coordinates: [lng, lat],
-                        };
-                    }
+                    // if (type === "Point") {
+                    //     const lng = Number(coordinates[0]);
+                    //     const lat = Number(coordinates[1]);
+                    //
+                    //     if (Number.isNaN(lng) || Number.isNaN(lat)) {
+                    //         throw new Error("Invalid Point coordinates");
+                    //     }
+                    //
+                    //     return {
+                    //         type,
+                    //         coordinates: [lng, lat],
+                    //     };
+                    // }
 
                     return {
                         type,

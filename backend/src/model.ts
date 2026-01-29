@@ -43,10 +43,10 @@ export interface Image {
     size?: number;
 }
 
-export type GeoJSONType = "Point" | "LineString" | "Polygon";
+// export type GeoJSONType = "Point" | "LineString" | "Polygon";
 
 export interface Location {
-    type: GeoJSONType;
+    type: "Polygon";
     coordinates: number[] | number[][] | number[][][];
 }
 
@@ -91,7 +91,7 @@ const PostSchema = new Schema<IPost>(
                 _id: false,
                 type: {
                     type: String,
-                    enum: ["Point", "LineString", "Polygon"],
+                    enum: ["Polygon"],
                     required: true,
                 },
                 coordinates: {
@@ -115,7 +115,7 @@ const PostSchema = new Schema<IPost>(
 
 
 // GeoSpatial index for GeoJSON queries
-PostSchema.index({ locations: "2dsphere" });
+// PostSchema.index({ locations: "2dsphere" });
 
 
 const User = model<IUser>("User", UserSchema);
