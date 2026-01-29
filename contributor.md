@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 ## Contributors ✨
 
@@ -13,6 +13,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
   <tbody>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Vikk-17"><img src="https://avatars.githubusercontent.com/u/55848083?v=4?s=100" width="100px;" alt="EtBlack"/><br /><sub><b>EtBlack</b></sub></a><br /><a href="https://github.com/Souvik Chakraborty/BlueLedger/commits?author=Vikk-17" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/subhachakraborty"><img src="https://avatars.githubusercontent.com/u/63599774?v=4?s=100" width="100px;" alt="Subha chakraborty"/><br /><sub><b>Subha chakraborty</b></sub></a><br /><a href="https://github.com/Souvik Chakraborty/BlueLedger/commits?author=subhachakraborty" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
