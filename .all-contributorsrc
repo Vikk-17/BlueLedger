@@ -1,0 +1,15 @@
+{
+  "projectName": "BlueLedger",
+  "projectOwner": "Souvik Chakraborty",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "files": [
+    "contributor.md"
+  ],
+  "imageSize": 100,
+  "commit": true,
+  "commitConvention": "gitmoji",
+  "contributors": [],
+  "contributorsPerLine": 7,
+  "linkToUsage": false
+}
