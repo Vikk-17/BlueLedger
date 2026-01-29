@@ -1,13 +1,6 @@
 #!/usr/bin/env python3
 """
 Main entry point for Carbon Credit Calculation System
-
-Usage:
-    python main.py [--config path/to/config.yaml]
-    
-Before running, set environment variables:
-    export SENTINEL_HUB_CLIENT_ID="your-client-id"
-    export SENTINEL_HUB_CLIENT_SECRET="your-client-secret"
 """
 
 import argparse
@@ -22,7 +15,6 @@ from carbon_credit_pipeline import CarbonCreditPipeline
 
 
 def check_environment():
-    """Check if required environment variables are set"""
     required_vars = ['SENTINEL_HUB_CLIENT_ID', 'SENTINEL_HUB_CLIENT_SECRET']
     missing = [var for var in required_vars if not os.getenv(var)]
     
@@ -51,11 +43,6 @@ Examples:
   
   # Run with custom config
   python main.py --config my_config.yaml
-  
-  # Run with explicit credentials (not recommended)
-  SENTINEL_HUB_CLIENT_ID=xxx SENTINEL_HUB_CLIENT_SECRET=yyy python main.py
-
-For more information, see README.md
         """
     )
     

@@ -1,7 +1,3 @@
-"""
-Configuration loader with environment variable support
-"""
-
 import yaml
 import os
 from pathlib import Path

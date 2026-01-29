@@ -1,8 +1,6 @@
 # Carbon Credit Calculation Configuration
 
 sentinel_hub:
-  # Use environment variables for security - never commit credentials!
-  # Set these before running: export SENTINEL_HUB_CLIENT_ID="your-id"
   client_id: ${SENTINEL_HUB_CLIENT_ID}
   client_secret: ${SENTINEL_HUB_CLIENT_SECRET}
 
