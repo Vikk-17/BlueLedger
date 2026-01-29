@@ -1,0 +1,89 @@
+# Carbon Credit Calculation Configuration
+
+sentinel_hub:
+  client_id: ${SENTINEL_HUB_CLIENT_ID}
+  client_secret: ${SENTINEL_HUB_CLIENT_SECRET}
+
+project:
+  name: "Forest Carbon Project 2026"
+  aoi_file: "aoi.geojson"
+  output_dir: "outputs"
+  cache_dir: "cache"
+  log_dir: "logs"
+
+acquisition:
+  # Multiple time intervals for better cloud-free coverage
+  time_intervals:
+    - ["2026-01-01", "2026-01-15"]
+    - ["2026-01-16", "2026-01-31"]
+  
+  # Fallback intervals if primary fails
+  fallback_intervals:
+    - ["2025-12-15", "2025-12-31"]
+  
+  output_size: [512, 512]
+  mosaicking_order: "leastCC"  # Least cloud coverage
+  
+quality:
+  min_coverage_percent: 80  # Minimum valid pixel coverage
+  max_cloud_coverage: 20    # Maximum cloud coverage percentage
+
+carbon_model:
+  carbon_fraction: 0.48      # Carbon content in biomass (48%)
+  co2_to_c_ratio: 3.67       # CO2 to Carbon molecular weight ratio
+  uncertainty: 0.15          # Model uncertainty (15%)
+  
+  # Forest type specific biomass models: AGB = a * NDVI + b
+  biomass_models:
+    dense_forest:
+      priority: 2
+      name: "Dense Forest"
+      a: 150.2
+      b: -45.0
+      ndvi_min: 0.6
+      ndvi_max: 1.0
+    
+    moderate_forest:
+      priority: 1
+      name: "Moderate Forest"
+      a: 120.3
+      b: -35.4
+      ndvi_min: 0.4
+      ndvi_max: 0.6
+    
+    sparse_vegetation:
+      priority: 0
+      name: "Sparse Vegetation"
+      a: 80.5
+      b: -20.0
+      ndvi_min: 0.2
+      ndvi_max: 0.4
+    
+    non_forest:
+      priority: -1
+      name: "Non-Forest"
+      a: 0.0
+      b: 0.0
+      ndvi_min: -1.0
+      ndvi_max: 0.2
+
+eligibility:
+  ndwi_threshold: -0.4       # Minimum water index for eligibility
+  min_ndvi: 0.3              # Minimum vegetation index
+  min_area_ha: 1.0           # Minimum project area in hectares
+  min_coverage_percent: 80    # Minimum data coverage
+  max_temporal_cv: 0.3       # Maximum coefficient of variation for stability
+
+# Change detection configuration 
+change_detection:
+  enable: true                    # Set to true to enable historical baseline comparison
+  baseline_period_months: 12      # Compare with 12 months ago
+  change_threshold: 0.1           # 10% NDVI change threshold
+  min_improvement_percent: 30     # Require 30% of area to show improvement for additionality
+
+processing:
+  enable_cache: true
+  max_retries: 3
+  retry_delay_seconds: 5
+  create_visualizations: true
+  generate_pdf_report: true
