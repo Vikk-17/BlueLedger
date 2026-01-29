@@ -1,0 +1,22 @@
+# Core dependencies
+numpy>=1.21.0
+geopandas>=0.10.0
+rasterio>=1.2.0
+pyproj>=3.0.0
+sentinelhub>=3.9.0
+shapely>=1.8.0
+
+# Data processing
+pandas>=1.3.0
+scipy>=1.7.0
+
+# Visualization
+matplotlib>=3.5.0
+seaborn>=0.11.0
+
+# Configuration
+pyyaml>=6.0
+
+# Optional: For PDF reports (if implementing)
+# reportlab>=3.6.0
+# pillow>=9.0.0
