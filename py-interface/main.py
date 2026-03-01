@@ -7,7 +7,7 @@ import argparse
 import sys
 import os
 from pathlib import Path
-
+from dotenv import load_dotenv
 # Add current directory to path
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -15,8 +15,20 @@ from carbon_credit_pipeline import CarbonCreditPipeline
 
 
 def check_environment():
+    load_dotenv()
+
     required_vars = ["SENTINEL_HUB_CLIENT_ID", "SENTINEL_HUB_CLIENT_SECRET"]
     missing = [var for var in required_vars if not os.getenv(var)]
+    # try:
+    #     SENTINEL_HUB_CLIENT_ID=os.getenv("CLIENT_ID")
+    #     SENTINEL_HUB_CLIENT_SECRET=os.getenv("CLIENT_SECRET")
+    #     # print(SENTINEL_HUB_CLIENT_ID, SENTINEL_HUB_CLIENT_SECRET)
+    #     return True
+    #
+    # except: 
+    #     print("Invalid SENTINEL_HUB_CLIENT_ID")
+    #     print("Invalid SENTINEL_HUB_CLIENT_SECRET")
+    #     return False
 
     if missing:
         print("ERROR: Missing required environment variables:")

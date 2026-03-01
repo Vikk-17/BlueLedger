@@ -4,8 +4,9 @@ Carbon credit calculation with forest type stratification
 
 import numpy as np
 import rasterio
+from rasterio.crs import CRS
 from rasterio.mask import mask
-from typing import Dict, Tuple
+from typing import Dict
 import logging
 
 logger = logging.getLogger(__name__)
@@ -103,7 +104,7 @@ class CarbonCalculator:
         return carbon * self.co2_to_c_ratio
 
     def calculate_pixel_area(
-        self, transform: rasterio.Affine, crs: rasterio.crs.CRS
+        self, transform: rasterio.Affine, crs: CRS
     ) -> float:
         """
         Calculate area of a pixel in hectares.

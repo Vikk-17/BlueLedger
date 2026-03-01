@@ -4,7 +4,7 @@ Main carbon credit calculation pipeline with change detection
 
 import logging
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Dict
 import geopandas as gpd

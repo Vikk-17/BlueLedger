@@ -135,12 +135,12 @@ def _extract_summary():
 def _parse_report(text):
     """Parse carbon credit report text to extract summary values."""
     summary = {
-        "NDVI_MEAN": None,
-        "NDWI_MEAN": None,
-        "TOTAL_AREA": None,
-        "TOTAL_CREDITS": None,
-        "STATUS": None,
-        "TIME_PERIOD": None,
+        "NDVI_MEAN": 0.0,
+        "NDWI_MEAN": 0.0,
+        "TOTAL_AREA": 0.0,
+        "TOTAL_CREDITS": 0.0,
+        "STATUS": "",
+        "TIME_PERIOD": [],
     }
 
     lines = [ln.strip() for ln in text.splitlines()]
@@ -188,8 +188,6 @@ def _parse_report(text):
 
 
 if __name__ == "__main__":
-    print("Starting BlueLedger API on http://0.0.0.0:8000")
-    print("Endpoints:")
     print("  GET  /health - Health check")
     print("  POST /run    - Submit GeoJSON and run pipeline")
     app.run(host="0.0.0.0", port=8000, debug=False)
