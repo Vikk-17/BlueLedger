@@ -1,3 +1,4 @@
+use sqlx::Row;
 use uuid::Uuid;
 use crate::state::state::AppState;
 use bcrypt::{
@@ -13,6 +14,10 @@ use crate::models::{
     geojson::*,
     users::*,
 };
+use hmac::{Hmac, Mac};
+use jwt::SignWithKey;
+use sha2::Sha256;
+use std::collections::BTreeMap;
 
 #[get("/")]
 pub async fn hello() -> impl Responder {
@@ -66,27 +71,39 @@ pub async fn login(state: Data<AppState>, payload: Json<LoginUser>) -> impl Resp
     // check if the user exists
     let result = sqlx::query(
         r#"
-        SELECT email from users
+        SELECT email, password from users
         WHERE email=$1
-        RETURNING password
         "#,
     )
-    .bind(user.email)
+    .bind(&user.email)
     .fetch_one(&state.db)
     .await;
-    // match result {
-    //     Ok(_) => {
-    //         // verify the user with password
-    //         verify(password, password)
-    //     },
-    //     Err(_) => HttpResponse::InternalServerError().json(json!({
-    //         "message": "User not found"
-    //     })),
-    // }
-    // return the jwt
+    match result {
+        Ok(row) => {
+            // verify the user with password
+            let hashed_password = row.get("password");
+            let is_valid: bool = verify(&user.password, hashed_password).unwrap_or(false);
+            if is_valid{
+                let key: Hmac<Sha256> = Hmac::new_from_slice(b"secret").unwrap();
+                let mut claims = BTreeMap::new();
+                claims.insert("sub", "someone");
+                let token_str = claims.sign_with_key(&key).unwrap();
 
-    HttpResponse::Ok()
+                HttpResponse::Ok().json(json!({
+                    "message": format!("Bearer {}", token_str)
+                }))
+            }
+            else {
+                HttpResponse::Unauthorized().json(json!({
+                    "message": "Invalid email or password"
+                }))
+            }
+        },
 
+        Err(_) => HttpResponse::NotFound().json(json!({
+            "message": "User not found"
+        })),
+    }
 }
 
 #[post("/geojson")]
