@@ -2,7 +2,7 @@ use serde::{Serialize, Deserialize};
 
 
 // Example data
-//{
+// {
 //   "name": "Delivery Zone A",
 //   "geometry": {
 //     "type": "Polygon",
