@@ -2,13 +2,16 @@ use uuid::Uuid;
 use crate::state::state::AppState;
 use bcrypt::{
     hash,
+    verify,
     DEFAULT_COST,
 };
-use actix_web::{get, post, web, HttpResponse, Responder};
+use actix_web::{
+    HttpResponse, Responder, get, post, web::{Data, Json}
+};
 use serde_json::json;
 use crate::models::{
     geojson::*,
-    users::User,
+    users::*,
 };
 
 #[get("/")]
@@ -17,8 +20,8 @@ pub async fn hello() -> impl Responder {
 }
 
 #[post("/signup")]
-pub async fn signup(state: web::Data<AppState>, user: web::Json<User>) -> impl Responder {
-    let user = user.into_inner();
+pub async fn signup(state: Data<AppState>, payload: Json<SignupUser>) -> impl Responder {
+    let user = payload.into_inner();
     // hash the password
     let id = Uuid::new_v4();
     let hashed_password = match hash(user.password, DEFAULT_COST) {
@@ -56,13 +59,38 @@ pub async fn signup(state: web::Data<AppState>, user: web::Json<User>) -> impl R
     }
 }
 
-// #[post("/login")]
-// pub async fn signup() -> impl Responder {
-//
-// }
+#[post("/login")]
+pub async fn login(state: Data<AppState>, payload: Json<LoginUser>) -> impl Responder {
+    let user = payload.into_inner();
+
+    // check if the user exists
+    let result = sqlx::query(
+        r#"
+        SELECT email from users
+        WHERE email=$1
+        RETURNING password
+        "#,
+    )
+    .bind(user.email)
+    .fetch_one(&state.db)
+    .await;
+    // match result {
+    //     Ok(_) => {
+    //         // verify the user with password
+    //         verify(password, password)
+    //     },
+    //     Err(_) => HttpResponse::InternalServerError().json(json!({
+    //         "message": "User not found"
+    //     })),
+    // }
+    // return the jwt
+
+    HttpResponse::Ok()
+
+}
 
 #[post("/geojson")]
-pub async fn geo(geojson: web::Json<PolygonGeoJson>) -> impl Responder {
+pub async fn geo(geojson: Json<PolygonGeoJson>) -> impl Responder {
     let geojson = geojson.into_inner();
     HttpResponse::Ok().json(json!({
         "Name": geojson.name,

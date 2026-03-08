@@ -4,26 +4,24 @@ mod state;
 
 use actix_web::{web, App, HttpServer};
 use routes::handlers::*;
-use models::{
-    geojson::*,
-    users::*
-};
+// use models::{
+//     geojson::*,
+//     users::*
+// };
 use dotenvy::dotenv;
 use sqlx::{Pool, Postgres};
 use sqlx::postgres::PgPoolOptions;
-
-use self::state::state::AppState;
+use crate::state::state::AppState;
 
 pub async fn run() -> std::io::Result<()> {
 
-    // std::env::set_var("RUST_LOG", "debug");
-    // env_logger::init();
     env_logger::init_from_env(env_logger::Env::default().default_filter_or("debug"));
     dotenv().ok();
 
     // DB pool creation
     let db_uri: String = std::env::var("DATABASE_URL")
         .expect("Invalid Database Url");
+
     let pool: Pool<Postgres> = match PgPoolOptions::new()
         .max_connections(3)
         .connect(&db_uri)
@@ -47,12 +45,10 @@ pub async fn run() -> std::io::Result<()> {
             .service(hello)
             .service(geo)
             .service(signup)
+            .service(login)
     })
-    // random ip binding with random port
-    // need to use the TCPListener for random port each time server start
-    // use hot realod
     .bind(("0.0.0.0", 8000))?
-        .workers(2)
+        .workers(3)
         .run()
         .await
 }
