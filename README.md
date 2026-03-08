@@ -1,4 +1,4 @@
-# Architecute
+# Architecture
 
 ### First Draft
 ![Architecture](./assets/images/architecture.svg)
