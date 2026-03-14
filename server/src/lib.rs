@@ -1,6 +1,7 @@
 mod routes;
 mod models;
 mod state;
+mod middleware;
 
 use actix_web::{web, App, HttpServer};
 use routes::handlers::*;
