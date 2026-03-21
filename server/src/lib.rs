@@ -2,14 +2,9 @@ mod routes;
 mod models;
 mod state;
 mod config;
-// mod middleware;
 
 use actix_web::{web, App, HttpServer};
 use routes::handlers::*;
-// use models::{
-//     geojson::*,
-//     users::*
-// };
 use dotenvy::dotenv;
 use sqlx::{Pool, Postgres};
 use sqlx::postgres::PgPoolOptions;
@@ -24,13 +19,9 @@ pub async fn run() -> std::io::Result<()> {
     // load the config via envs
     let config: Config = envy::from_env().unwrap();
 
-    let db_uri: String = config.database_url;
-    let jwt_secret: String = config.secret_key;
-
-
     let pool: Pool<Postgres> = match PgPoolOptions::new()
         .max_connections(3)
-        .connect(&db_uri)
+        .connect(&config.database_url.clone())
         .await
         {
             Ok(pool) => {
@@ -46,7 +37,8 @@ pub async fn run() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(AppState {
-                db: pool.clone()
+                db: pool.clone(),
+                config: config.clone(),
             }))
             .service(hello)
             .service(geo)
