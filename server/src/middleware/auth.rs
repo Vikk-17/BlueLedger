@@ -1,13 +1,16 @@
-use futures::future::{ok, Ready};
+use futures::future::{LocalBoxFuture, Ready, ok};
 use actix_web::{
-    Error, HttpResponse, dev::{Service, ServiceRequest, ServiceResponse, Transform}
+    HttpMessage,
+    Error, 
+    HttpResponse,
+    dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform}
 };
-// use jwt::claims;
 use std::{future::Future, pin::Pin};
 use jsonwebtoken::{decode, DecodingKey, Validation};
 pub struct JwtMiddleware {
     secret: String,
 }
+use serde_json::json;
 
 impl JwtMiddleware {
     pub fn new(secret: impl Into<String>) -> Self {
@@ -21,7 +24,7 @@ where
     S::Future: 'static,
     B: 'static,
 {
-    type Response = ServiceResponse;
+    type Response = ServiceResponse<B>;
     type Error = Error;
     type InitError = ();
     type Transform = JwtMiddlewareService<S>;
@@ -48,12 +51,14 @@ where
 {
     type Response = ServiceResponse<B>;
     type Error    = Error;
-    type Future   = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>>>>;
+    // type Future   = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>>>>;
 
-    actix_web::dev::forward_ready!(service);
+    type Future = LocalBoxFuture<'static, Result<Self::Response, Self::Error>>;
+
+    forward_ready!(service);
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
-        
+
         let auth_header = req
             .headers()
             .get("Authorization")
@@ -64,24 +69,23 @@ where
         let secret = self.secret.clone();
 
         // verify and decode
-        let claims_result = verify_token(auth_header, &secret);
-        match claims_result {
-            Ok(claims) => {
-                req.extensions_mut().insert(claims);
-                let fut  = self.service.call(req);
-                Box::pin(async move { fut.await })
-            }
-            Err(msg) => {
-                Box::pin(async move {
-                    Ok(req.into_response(
-                            HttpResponse::Unauthorized()
-                            .json(json!({
-                                "error": msg
-                            }))
-                            .map_into_right_body()
-                    ))
-                })
-            }
-        }
-    }
+        // let claims_result = verify_token(auth_header, &secret);
+        // match claims_result {
+        //     Ok(claims) => {
+        //         req.extensions().insert(claims);
+        //         let fut  = self.service.call(req);
+        //         Box::pin(async move { fut.await })
+        //     }
+        //     Err(msg) => {
+        //         Box::pin(async move {
+        //             Ok(req.into_response(
+        //                     HttpResponse::Unauthorized()
+        //                     .json(json!({
+        //                         "error": msg
+        //                     }))
+        //                     .map_into_right_body()
+        //             ))
+        //         })
+            // }
+        // }
 }
