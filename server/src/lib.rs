@@ -1,7 +1,8 @@
 mod routes;
 mod models;
 mod state;
-mod middleware;
+mod config;
+// mod middleware;
 
 use actix_web::{web, App, HttpServer};
 use routes::handlers::*;
@@ -13,15 +14,19 @@ use dotenvy::dotenv;
 use sqlx::{Pool, Postgres};
 use sqlx::postgres::PgPoolOptions;
 use crate::state::state::AppState;
+use crate::config::*;
 
 pub async fn run() -> std::io::Result<()> {
 
     env_logger::init_from_env(env_logger::Env::default().default_filter_or("debug"));
     dotenv().ok();
 
-    // DB pool creation
-    let db_uri: String = std::env::var("DATABASE_URL")
-        .expect("Invalid Database Url");
+    // load the config via envs
+    let config: Config = envy::from_env().unwrap();
+
+    let db_uri: String = config.database_url;
+    let jwt_secret: String = config.secret_key;
+
 
     let pool: Pool<Postgres> = match PgPoolOptions::new()
         .max_connections(3)
@@ -48,7 +53,7 @@ pub async fn run() -> std::io::Result<()> {
             .service(signup)
             .service(login)
     })
-    .bind(("0.0.0.0", 8000))?
+    .bind(("0.0.0.0", 9000))?
         .workers(3)
         .run()
         .await
