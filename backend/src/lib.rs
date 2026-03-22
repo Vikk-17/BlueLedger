@@ -50,7 +50,7 @@ pub async fn run() -> std::io::Result<()> {
             .service(signup)
             .service(login)
             .service(
-                web::scope("")
+                web::scope("/api")
                     .wrap(JwtMiddleware::new(config.secret_key.clone()))
                     .service(geo),
             )
