@@ -2,6 +2,7 @@ mod routes;
 mod models;
 mod state;
 mod config;
+mod middleware;
 
 use actix_web::{web, App, HttpServer};
 use routes::handlers::*;
@@ -9,7 +10,8 @@ use dotenvy::dotenv;
 use sqlx::{Pool, Postgres};
 use sqlx::postgres::PgPoolOptions;
 use crate::state::state::AppState;
-use crate::config::*;
+use crate::config::Config;
+use crate::middleware::auth::*;
 
 pub async fn run() -> std::io::Result<()> {
 
@@ -41,9 +43,13 @@ pub async fn run() -> std::io::Result<()> {
                 config: config.clone(),
             }))
             .service(hello)
-            .service(geo)
             .service(signup)
             .service(login)
+            .service(
+                web::scope("")
+                .wrap(JwtMiddleware::new(config.secret_key.clone()))
+                .service(geo)
+            )
     })
     .bind(("0.0.0.0", 9000))?
         .workers(3)

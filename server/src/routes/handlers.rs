@@ -84,6 +84,7 @@ pub async fn login(state: Data<AppState>, payload: Json<LoginUser>) -> impl Resp
             let hashed_password = row.get("password");
             let is_valid: bool = verify(&user.password, hashed_password).unwrap_or(false);
             if is_valid{
+                // let secret = state.config.secret_key.clone();
                 let key: Hmac<Sha256> = Hmac::new_from_slice(b"secret").unwrap();
                 let mut claims = BTreeMap::new();
                 claims.insert("sub", "someone");
