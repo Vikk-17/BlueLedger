@@ -15,6 +15,7 @@ use crate::middleware::auth::*;
 
 pub async fn run() -> std::io::Result<()> {
 
+    // Must run before any encode/decode. Also avoids ambiguity if crate features unify badly.
     rustls::crypto::aws_lc_rs::default_provider()
         .install_default()
         .expect("Can't set crypto provider");

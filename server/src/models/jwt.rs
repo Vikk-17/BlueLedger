@@ -4,4 +4,5 @@ use serde::{Serialize, Deserialize};
 pub struct Claims {
     pub email: String,
     pub password: String,
+    pub exp: u64,
 }

@@ -2,7 +2,7 @@ use crate::models::jwt::Claims;
 use futures::future::{LocalBoxFuture, Ready, ok};
 use actix_web::{
     HttpMessage,
-    Error, 
+    Error,
     HttpResponse,
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
     body::{EitherBody, BoxBody},

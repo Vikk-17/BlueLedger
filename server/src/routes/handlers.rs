@@ -1,3 +1,4 @@
+use chrono::{Utc, Duration};
 use sqlx::Row;
 use uuid::Uuid;
 use crate::state::state::AppState;
@@ -14,11 +15,6 @@ use crate::models::{
     geojson::*,
     users::*,
 };
-// use hmac::{Hmac, Mac};
-// use jwt::SignWithKey;
-// use sha2::Sha256;
-// use std::collections::BTreeMap;
-// use jsonwebtoken::{decode, DecodingKey, Validation, Algorithm};
 use jsonwebtoken::{encode, Header, EncodingKey};
 use crate::models::jwt::Claims;
 
@@ -91,6 +87,7 @@ pub async fn login(state: Data<AppState>, payload: Json<LoginUser>) -> impl Resp
                 let claims = Claims {
                     email: user.email,
                     password: user.password,
+                    exp: (Utc::now() + Duration::hours(24)).timestamp() as u64,
                 };
 
                 // This will create a JWT using HS256 as algorithm
@@ -101,7 +98,8 @@ pub async fn login(state: Data<AppState>, payload: Json<LoginUser>) -> impl Resp
                 ).unwrap();
 
                 HttpResponse::Ok().json(json!({
-                    "message": format!("Bearer {}", token)
+                    "message": "Login Successful",
+                    "token": token,
                 }))
             }
             else {
