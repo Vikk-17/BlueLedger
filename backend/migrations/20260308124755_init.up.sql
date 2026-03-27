@@ -1,5 +1,8 @@
 -- Add up migration script here
 
+-- Enable postgis extension
+CREATE EXTENSION IF NOT EXISTS postgis;
+
 CREATE TABLE IF NOT EXISTS users(
     id                      uuid PRIMARY KEY,
     fullname                TEXT NOT NULL,
@@ -13,10 +16,11 @@ CREATE TABLE IF NOT EXISTS users(
 CREATE INDEX idx_users_email ON users(username);
 
 CREATE TABLE IF NOT EXISTS plots (
-    id                      uuid PRIMARY KEY,
+    id                      UUID PRIMARY KEY,
     user_id                 UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    geojson                 JSONB NOT NULL,
-    area_sqm                FLOAT NOT NULL,
+    -- geojson                 JSONB NOT NULL,
+    geom                    GEOGRAPHY(POLYGON, 4326) NOT NULL,
+    area_sqm                DOUBLE PRECISION GENERATED ALWAYS AS (ST_AREA(geom)) STORED,
     location_name           TEXT,
     status                  TEXT NOT NULL DEFAULT 'active'
                             CHECK (status IN ('active', 'disputed', 'deregistered')),
@@ -24,6 +28,7 @@ CREATE TABLE IF NOT EXISTS plots (
 );
 
 CREATE INDEX idx_plot_user_id ON plots(user_id);
+CREATE INDEX idx_plots_geom ON plots USING GIST (geom);
 
 CREATE TABLE IF NOT EXISTS claims(
     id                      UUID PRIMARY KEY,

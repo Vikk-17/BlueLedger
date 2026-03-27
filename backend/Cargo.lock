@@ -2286,7 +2286,6 @@ dependencies = [
  "envy",
  "futures",
  "futures-util",
- "hmac",
  "jsonwebtoken",
  "rustls",
  "serde",

@@ -52,7 +52,8 @@ pub async fn run() -> std::io::Result<()> {
             .service(
                 web::scope("/api")
                     .wrap(JwtMiddleware::new(config.secret_key.clone()))
-                    .service(geo),
+                    .service(geo)
+                    .service(register_plot)
             )
     })
     .bind(("0.0.0.0", 9000))?

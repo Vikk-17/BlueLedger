@@ -1,11 +1,12 @@
 use crate::models::jwt::Claims;
 use crate::models::{geojson::*, users::*};
 use crate::state::state::AppState;
+use actix_web::HttpMessage;
 use actix_web::{
-    HttpResponse, Responder, get, post,
+    HttpRequest, HttpResponse, Responder, get, post,
     web::{Data, Json},
 };
-use bcrypt::{DEFAULT_COST, hash, verify};
+use bcrypt::DEFAULT_COST;
 use chrono::{Duration, Utc};
 use jsonwebtoken::{EncodingKey, Header, encode};
 use serde_json::json;
@@ -24,7 +25,7 @@ pub async fn signup(state: Data<AppState>, payload: Json<SignupUser>) -> impl Re
     // Creating the payload
     let id = Uuid::new_v4();
     let fullname: String = format!("{} {}", user.firstname, user.lastname);
-    let hashed_password = match hash(user.password, DEFAULT_COST) {
+    let hashed_password = match bcrypt::hash(user.password, DEFAULT_COST) {
         Ok(value) => value,
         Err(_) => {
             return HttpResponse::InternalServerError().json(json!({
@@ -65,7 +66,7 @@ pub async fn login(state: Data<AppState>, payload: Json<LoginUser>) -> impl Resp
     // check if the user exists
     let result = sqlx::query(
         r#"
-        SELECT username, password_hash from users
+        SELECT id, username, password_hash from users
         WHERE username=$1
         "#,
     )
@@ -76,11 +77,11 @@ pub async fn login(state: Data<AppState>, payload: Json<LoginUser>) -> impl Resp
         Ok(row) => {
             // verify the user with password
             let hashed_password = row.get("password_hash");
-            let is_valid: bool = verify(&user.password, hashed_password).unwrap_or(false);
+            let is_valid: bool = bcrypt::verify(&user.password, hashed_password).unwrap_or(false);
             if is_valid {
                 let secret = state.config.secret_key.clone();
                 let claims = Claims {
-                    username: user.username,
+                    sub: row.get("id"), // user id
                     exp: (Utc::now() + Duration::hours(24)).timestamp() as u64,
                     iat: Utc::now().timestamp() as u64,
                 };
@@ -119,7 +120,49 @@ pub async fn geo(geojson: Json<PolygonGeoJson>) -> impl Responder {
     }))
 }
 
-// #[post("/plots")]
-// pub async fn register_plot() -> impl Responder {
-//
-// }
+#[post("/plots")]
+pub async fn register_plot(req: HttpRequest, state: Data<AppState>, geojson: Json<PolygonGeoJson>) -> impl Responder {
+
+    // access the injected token extension
+    // req.extensions is temporary value coming from middleware
+    // so the get method referencing the the empty value, will not work
+    // let claims = req.extensions().get::<Claims>().unwrap();
+
+    let extensions = req.extensions();
+    let claims = extensions.get::<Claims>().unwrap();
+    let sub = &claims.sub;
+    let uuid = Uuid::new_v4();
+    let geojson = geojson.into_inner();
+    let location_name = geojson.name;
+    let geojson_str = serde_json::to_string(&geojson.geometry).unwrap();
+
+    let result = sqlx::query(
+        r#"
+        INSERT INTO plots (id, user_id, geom, location_name)
+        VALUES ($1, $2, ST_GeomFromGeoJSON($3), $4)
+        RETURNING id
+        "#
+    )
+        .bind(uuid) // uuid for plot generated in local scope
+        .bind(sub) // user_id
+        .bind(geojson_str)
+        .bind(location_name)
+        .fetch_one(&state.db)
+        .await;
+
+    match result {
+        Ok(row) => {
+            let uuid: Uuid = row.get("id");
+            HttpResponse::Ok().json(json!({
+                "message": "Plot registered",
+                "ID": uuid,
+            }))
+        },
+        Err(e) => {
+            HttpResponse::InternalServerError().json(json!({
+                "error": e.to_string(),
+                "message": "Failed to registered",
+            }))
+        }
+    }
+}
