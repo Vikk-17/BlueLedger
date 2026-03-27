@@ -6,3 +6,6 @@ venv/
 
 *.tif
 aoi.geojson
+
+*.docx
+*.pdf
