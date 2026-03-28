@@ -3,7 +3,7 @@ use crate::models::{geojson::*, users::*};
 use crate::state::state::AppState;
 use actix_web::{
     HttpRequest, HttpResponse, HttpMessage, Responder, get, post,
-    web::{Data, Json},
+    web::{Data, Json, Path},
 };
 use bcrypt::DEFAULT_COST;
 use chrono::{Duration, Utc};
@@ -213,6 +213,51 @@ pub async fn get_plots(req: HttpRequest, state: Data<AppState>) -> impl Responde
         Err(e) => {
             HttpResponse::InternalServerError().json(json!({
                 "message": "Internal Server Error",
+                "error": e.to_string(),
+            }))
+        }
+    }
+}
+
+#[get("/plots/{id}")]
+pub async fn get_plots_with_id(
+    state: Data<AppState>,
+    path: Path<(Uuid,)>
+    ) -> impl Responder {
+
+    let path = path.into_inner();
+    let plot_id: Uuid = path.0;
+
+    let result = sqlx::query(
+        r#"
+        SELECT id, ST_AsGeoJSON(geom) as geom, area_sqm, location_name
+        FROM plots
+        WHERE id = $1
+        "#,
+    )
+    .bind(plot_id)
+    .fetch_one(&state.db) // returns Result<Row, sqlx::Error>
+    .await;
+
+    match result {
+        Ok(row) => {
+            let id: Uuid = row.get("id");
+            let location_name: String = row.get("location_name");
+            let area: f64 = row.get("area_sqm");
+            let geom_str: String = row.get("geom");
+            let geom_json: serde_json::Value = serde_json::from_str(&geom_str).unwrap();
+
+            HttpResponse::Ok().json(json!({
+                    "id": id,
+                    "location_name": location_name,
+                    "area": area,
+                    "geometry": geom_json,
+            }))
+        }
+
+        Err(e) => {
+            HttpResponse::NotFound().json(json!({
+                "message": "No Plot Found",
                 "error": e.to_string(),
             }))
         }

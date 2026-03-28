@@ -55,6 +55,7 @@ pub async fn run() -> std::io::Result<()> {
                     .service(geo)
                     .service(register_plots)
                     .service(get_plots)
+                    .service(get_plots_with_id),
             )
     })
     .bind(("0.0.0.0", 9000))?
