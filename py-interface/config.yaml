@@ -6,16 +6,16 @@ sentinel_hub:
 
 project:
   name: "Forest Carbon Project 2026"
-  aoi_file: "aoi.geojson"
+  # aoi_file: "aoi.geojson"
   output_dir: "outputs"
   log_dir: "logs"
 
 acquisition:
   time_intervals:
-    - ["2026-01-01", "2026-01-15"]
-    - ["2026-01-16", "2026-01-31"]
+    - ["2025-01-01", "2025-01-15"]
+    - ["2025-03-16", "2025-03-31"]
   output_size: [512, 512]
-  
+
 quality:
   min_coverage_percent: 80
 
@@ -23,7 +23,7 @@ carbon_model:
   carbon_fraction: 0.48
   co2_to_c_ratio: 3.67
   uncertainty: 0.15
-  
+
   biomass_models:
     dense_forest:
       priority: 2
