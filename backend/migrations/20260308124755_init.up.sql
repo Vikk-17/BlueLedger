@@ -16,10 +16,9 @@ CREATE TABLE IF NOT EXISTS users(
 CREATE INDEX idx_users_email ON users(username);
 
 CREATE TABLE IF NOT EXISTS plots (
-    id                      UUID PRIMARY KEY,
-    user_id                 UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    -- geojson                 JSONB NOT NULL,
-    geom                    GEOGRAPHY(POLYGON, 4326) NOT NULL,
+    id                      uuid PRIMARY KEY,
+    user_id                 uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    geom                    GEOGRAPHY(POLYGON, 4326) NOT NULL UNIQUE,
     area_sqm                DOUBLE PRECISION GENERATED ALWAYS AS (ST_AREA(geom)) STORED,
     location_name           TEXT,
     status                  TEXT NOT NULL DEFAULT 'active'
