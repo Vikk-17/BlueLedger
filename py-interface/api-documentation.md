@@ -1,8 +1,12 @@
 # BlueLedger API Documentation
 
-Flask-based REST API for the Carbon Credit Pipeline.
+FastAPI-based REST API for the Carbon Credit Pipeline.
 
 **Base URL:** `http://localhost:8000`
+
+**Interactive Documentation:** 
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
 
 ---
 
@@ -12,7 +16,7 @@ Flask-based REST API for the Carbon Credit Pipeline.
 
 **`GET /health`**
 
-Returns the API status.
+Returns the API liveness status.
 
 **Response:**
 ```json
@@ -25,7 +29,7 @@ Returns the API status.
 
 **`POST /run`**
 
-Submit an area of interest with metadata and execute the carbon credit analysis pipeline.
+Submit an area of interest with metadata and execute the carbon credit analysis pipeline. The geometry is processed in-memory.
 
 #### Request
 
@@ -60,7 +64,8 @@ Content-Type: application/json
 |-------|------|-------------|
 | `UUID` | string | The UUID provided in the request |
 | `name` | string | The name provided in the request |
-| `STATUS_CODE` | string | "True" if ELIGIBLE, "False" otherwise |
+| `STATUS_CODE` | string | `"True"` if ELIGIBLE, `"False"` otherwise |
+| `STATUS` | string | Detailed eligibility status (e.g., `"ELIGIBLE"`, `"INELIGIBLE (Failed: ...)"`) |
 | `summary` | object | Extracted metrics |
 
 **Summary Object:**
@@ -69,7 +74,6 @@ Content-Type: application/json
 |-------|------|-------------|
 | `NDVI_MEAN` | float | Normalized Difference Vegetation Index mean |
 | `NDWI_MEAN` | float | Normalized Difference Water Index mean |
-| `STATUS` | string | Eligibility status (e.g., "ELIGIBLE", "NOT_ELIGIBLE", "FAILED") |
 | `TOTAL_AREA` | float | Area in hectares |
 | `TOTAL_CREDITS` | integer | Carbon credits issued |
 
@@ -79,10 +83,10 @@ Content-Type: application/json
   "UUID": "123e4567-e89b-12d3-a456-426614174000",
   "name": "Amazon Basin Area A",
   "STATUS_CODE": "True",
+  "STATUS": "ELIGIBLE",
   "summary": {
     "NDVI_MEAN": 0.306,
     "NDWI_MEAN": -0.345,
-    "STATUS": "ELIGIBLE",
     "TOTAL_AREA": 3003.95,
     "TOTAL_CREDITS": 4576
   }
@@ -91,14 +95,26 @@ Content-Type: application/json
 
 #### Error Responses
 
-**400 Bad Request** - Missing Geometry:
+**422 Unprocessable Entity** - Validation Error (e.g., Missing Geometry, Invalid JSON):
 ```json
-{"error": "Missing 'geometry' field"}
+{
+  "detail": [
+    {
+      "type": "missing",
+      "loc": ["body", "geometry"],
+      "msg": "Field required",
+      "input": {
+        "UUID": "test-uuid",
+        "name": "Test Area"
+      }
+    }
+  ]
+}
 ```
 
-**400 Bad Request** - Invalid JSON:
+**500 Internal Server Error** - Pipeline Execution Failure:
 ```json
-{"error": "Invalid JSON: <error details>"}
+{"detail": "<error details>"}
 ```
 
 ---
@@ -109,6 +125,7 @@ Content-Type: application/json
 ```bash
 python3 api.py
 ```
+*(Note: Under the hood, this runs `uvicorn api:app --host 0.0.0.0 --port 8000`)*
 
 **Test health:**
 ```bash
@@ -138,5 +155,5 @@ curl -X POST http://localhost:8000/run \
 | `api_run_*.log` | `logs/` | API-level execution logs |
 | `carbon_calc_*.log` | `logs/` | Detailed pipeline execution logs |
 | `results_*.json` | `logs/` | Detailed pipeline results in JSON |
-| `carbon_credit_report.txt` | `outputs/` | Full analysis report |
-| `*_wgs84.tif`, `*_utm.tif` | `outputs/` | Generated NDVI/NDWI rasters |
+| `carbon_credit_report.txt` | `outputs/<UUID>/` | Full analysis report |
+| `*_wgs84.tif`, `*_utm.tif` | `outputs/<UUID>/` | Generated NDVI/NDWI rasters |
