@@ -49,6 +49,8 @@ pub async fn run() -> std::io::Result<()> {
             .service(hello)
             .service(signup)
             .service(login)
+            .service(check_health)
+            .service(analyze)
             .service(
                 web::scope("/api")
                     .wrap(JwtMiddleware::new(config.secret_key.clone()))

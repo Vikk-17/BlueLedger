@@ -11,6 +11,7 @@ use jsonwebtoken::{EncodingKey, Header, encode};
 use serde_json::json;
 use sqlx::Row;
 use uuid::Uuid;
+use std::collections::HashMap;
 
 #[get("/")]
 pub async fn hello() -> impl Responder {
@@ -262,4 +263,59 @@ pub async fn get_plots_with_id(
             }))
         }
     }
+}
+
+// testing for integration
+#[get("/ping")]
+pub async fn check_health() -> impl Responder {
+    let response = reqwest::get("http://localhost:8000/health")
+        .await
+        .unwrap()
+        .text()
+        .await
+        .unwrap();
+
+    println!("{:#?}", response);
+
+    HttpResponse::Ok().json(json!({
+        "messge": "Pong",
+    }))
+}
+
+#[post("/analyze")]
+pub async fn analyze() -> impl Responder {
+    let json_data = json!({
+        "UUID": "asdfaf-afasfasf",
+        "name": "Delivery Zone A",
+        "type": "Polygon",
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+                [
+                    [81.15, 19.48],
+                    [81.15, 19.45],
+                    [81.20, 19.45],
+                    [81.20, 19.48],
+                    [81.15, 19.48]
+                ]
+            ]
+        }
+    });
+    let client = reqwest::Client::new();
+
+    let response = client.post("http://localhost:8000/run")
+        .json(&json_data)
+        .send()
+        .await
+        .unwrap()
+        .text()
+        .await
+        .unwrap();
+
+    let parsed: serde_json::Value = serde_json::from_str(&response).unwrap();
+    println!("{:#}", parsed);
+
+    HttpResponse::Ok().json(json!({
+        "messge": "working",
+    }))
 }
