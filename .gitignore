@@ -9,3 +9,4 @@ aoi.geojson
 
 *.docx
 *.pdf
+.ruff_cache/

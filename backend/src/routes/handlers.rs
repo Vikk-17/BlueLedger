@@ -11,7 +11,6 @@ use jsonwebtoken::{EncodingKey, Header, encode};
 use serde_json::json;
 use sqlx::Row;
 use uuid::Uuid;
-use std::collections::HashMap;
 
 #[get("/")]
 pub async fn hello() -> impl Responder {
@@ -318,4 +317,84 @@ pub async fn analyze() -> impl Responder {
     HttpResponse::Ok().json(json!({
         "messge": "working",
     }))
+}
+
+#[post("/claims")]
+pub async fn claim_token(req: HttpRequest, state: Data<AppState>) -> impl Responder {
+    let extensions = req.extensions();
+    let claims = extensions.get::<Claims>().unwrap();
+    let sub: &Uuid = &claims.sub; // fetch the uuid
+
+    // fetch the plot_id from db
+    let plot_result = sqlx::query(
+        r#"
+        SELECT id, user_id FROM plots
+        WHERE user_id = $1
+        "#,
+    )
+    .bind(sub)
+    .fetch_one(&state.db)
+    .await;
+
+    match plot_result {
+        Ok(row) => {
+            // To verify the user with the plot
+            let user_id: Uuid = row.get("user_id");
+
+            // dereferencing of sub becaue of &Uuid
+            if user_id == *sub {
+                // create a claim txns
+                // create a uuid for the same claim
+                let claim_id = Uuid::new_v4();
+                // coming from the plot table
+                let plot_id: Uuid = row.get("id");
+                // Execute the transaction (write to the claims table)
+                let txns = sqlx::query(
+                    r#"
+                    INSERT INTO claims (id, plot_id, user_id)
+                    VALUES ($1, $2, $3)
+                    RETURNING id, status
+                    "#,
+                )
+                .bind(claim_id)
+                .bind(plot_id)
+                .bind(user_id)
+                .fetch_one(&state.db)
+                .await;
+
+                match txns {
+                    Ok(row) => {
+                        let status: String = row.get("status");
+
+                        HttpResponse::Ok().json(json!({
+                            "user_id": user_id,
+                            "plot_id": plot_id,
+                            "claim_id": claim_id,
+                            "status": status,
+                            "Messsage": "New task has been spawned",
+                        }))
+                    }
+                    Err(e) => {
+                        HttpResponse::Ok().json(json!({
+                            "Messsage": format!("Unknown error: {e}"),
+                        }))
+                    }
+                }
+
+            }
+            else {
+                HttpResponse::Ok().json(json!({
+                    "id": user_id,
+                    "Messsage": "User does not have any plot",
+                }))
+            }
+        }
+
+        Err(e) => {
+            HttpResponse::NotFound().json(json!({
+                "Message": "User does not have any related plots",
+                "Error": e.to_string(),
+            }))
+        }
+    }
 }
