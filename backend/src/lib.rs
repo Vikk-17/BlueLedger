@@ -7,7 +7,7 @@ mod state;
 use crate::config::Config;
 use crate::middleware::auth::*;
 use crate::state::state::AppState;
-use actix_web::{App, HttpServer, web};
+use actix_web::{App, HttpServer, web, middleware::Logger};
 use dotenvy::dotenv;
 use routes::handlers::*;
 use sqlx::postgres::PgPoolOptions;
@@ -46,6 +46,7 @@ pub async fn run() -> std::io::Result<()> {
                 db: pool.clone(),
                 config: config.clone(),
             }))
+            .wrap(Logger::default()) // enabled logger
             .service(hello)
             .service(signup)
             .service(login)
@@ -58,7 +59,8 @@ pub async fn run() -> std::io::Result<()> {
                     .service(register_plots)
                     .service(get_plots)
                     .service(get_plots_with_id)
-                    .service(claim_token),
+                    .service(claim_token)
+                    .service(poll_status)
             )
     })
     .bind(("0.0.0.0", 9000))?

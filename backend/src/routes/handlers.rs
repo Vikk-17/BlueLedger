@@ -345,7 +345,7 @@ pub async fn claim_token(req: HttpRequest, state: Data<AppState>) -> impl Respon
             if user_id == *sub {
                 // create a claim txns
                 // create a uuid for the same claim
-                let claim_id = Uuid::new_v4();
+                let claim_id: Uuid = Uuid::new_v4();
                 // coming from the plot table
                 let plot_id: Uuid = row.get("id");
                 // Execute the transaction (write to the claims table)
@@ -396,5 +396,44 @@ pub async fn claim_token(req: HttpRequest, state: Data<AppState>) -> impl Respon
                 "Error": e.to_string(),
             }))
         }
+    }
+}
+
+#[post("/claims/{id}")]
+async fn poll_status(
+    req: HttpRequest,
+    path: Path<(Uuid,)>,
+    state: Data<AppState>
+) ->impl Responder {
+
+    let extensions = req.extensions();
+    let claims = extensions.get::<Claims>().unwrap();
+    let sub: &Uuid = &claims.sub; // fetch the uuid
+
+    // get the id from the query
+    let path = path.into_inner();
+    let claim_id: Uuid = path.0;
+
+    let txns = sqlx::query(
+        r#"
+            SELECT status FROM claims
+            WHERE id=$1 and user_id=$2
+        "#)
+        .bind(claim_id)
+        .bind(sub)
+        .fetch_one(&state.db)
+        .await;
+
+    match txns {
+        Ok(row) => {
+            let status: String = row.get("status");
+
+            HttpResponse::Ok().json(json!({
+                "status": status,
+            }))
+        }
+        Err(_) => HttpResponse::NotFound().json(json!({
+            "status": "Claim id not found"
+        }))
     }
 }
