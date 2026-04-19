@@ -61,6 +61,7 @@ pub async fn run() -> std::io::Result<()> {
                     .service(get_plots_with_id)
                     .service(claim_token)
                     .service(poll_status)
+                    .service(get_all_claims_for_plot)
             )
     })
     .bind(("0.0.0.0", 9000))?

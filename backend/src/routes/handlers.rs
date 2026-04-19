@@ -6,7 +6,7 @@ use actix_web::{
     web::{Data, Json, Path},
 };
 use bcrypt::DEFAULT_COST;
-use chrono::{Duration, Utc};
+use chrono::{DateTime, Duration, Utc};
 use jsonwebtoken::{EncodingKey, Header, encode};
 use serde_json::json;
 use sqlx::Row;
@@ -399,7 +399,7 @@ pub async fn claim_token(req: HttpRequest, state: Data<AppState>) -> impl Respon
     }
 }
 
-#[post("/claims/{id}")]
+#[get("/claims/{id}")]
 async fn poll_status(
     req: HttpRequest,
     path: Path<(Uuid,)>,
@@ -435,5 +435,63 @@ async fn poll_status(
         Err(_) => HttpResponse::NotFound().json(json!({
             "status": "Claim id not found"
         }))
+    }
+}
+
+// list all claims for a plot 
+#[get("/plots/{id}/claims")]
+pub async fn get_all_claims_for_plot(
+    req: HttpRequest,
+    state: Data<AppState>,
+    path: Path<(Uuid,)>,
+) -> impl Responder
+{
+    let extension = req.extensions();
+    let claim = extension.get::<Claims>().unwrap();
+    let sub: &Uuid = &claim.sub;
+
+    let path = path.into_inner();
+    let plot_id: Uuid = path.0;
+
+    let txns = sqlx::query(
+        r#"
+            SELECT id, status, submitted_at, resolved_at FROM claims
+            WHERE plot_id=$1 and user_id=$2
+        "#
+    )
+    .bind(plot_id)
+    .bind(sub)
+    .fetch_all(&state.db)
+    .await;
+
+    match txns {
+        Ok(rows) => {
+            if rows.is_empty() {
+                return HttpResponse::NotFound().json(json!({
+                    "message": "Now rows found",
+                }));
+            }
+
+            let plots: Vec<_> = rows.into_iter().map(|row| {
+                let id: Uuid = row.get("id");
+                let status: String = row.get("status");
+                let submitted_at: DateTime<Utc> = row.get("submitted_at");
+                let resolved_at: Option<DateTime<Utc>> = row.get("resolved_at");
+                json!({
+                    "id": id,
+                    "status": status,
+                    "submitted_at": submitted_at,
+                    "resolved_at": resolved_at,
+                })
+            }).collect();
+
+            HttpResponse::Ok().json(plots)
+        },
+        Err(e) => {
+            HttpResponse::InternalServerError().json(json!({
+                "status": "In maintainance mode",
+                "error": e.to_string(),
+            }))
+        }
     }
 }
